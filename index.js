@@ -700,13 +700,21 @@ io.on("connection", (socket) => {
     }
     const room = rooms[roomName];
 
-    if (room.started || room.finished) {
-      socket.emit("roomBusy", { message: "Room is in battle. Try another room." });
+    // Block only if room is FINISHED or already has 2 different players
+    if (room.finished) {
+      socket.emit("roomBusy", { message: "Room finished. Please wait." });
       return;
     }
 
+    // Allow duplicate join check first
     if (room.players.find((p) => p.socketId === socket.id)) {
       socket.emit("joinedRoom", { roomId: roomName, playerCount: room.players.length });
+      return;
+    }
+
+    // Block if room already full with 2 players
+    if (room.players.length >= 2) {
+      socket.emit("roomBusy", { message: "Room is full (2/2). Try another room." });
       return;
     }
 
