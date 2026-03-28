@@ -770,6 +770,19 @@ io.on("connection", (socket) => {
     }
   });
 
+  // ─── Leave Room (called on rematch/back) ────────────────────────────────
+  socket.on("leaveRoom", (roomName) => {
+    const room = rooms[roomName];
+    if (!room) return;
+    const idx = room.players.findIndex((p) => p.socketId === socket.id);
+    if (idx !== -1) room.players.splice(idx, 1);
+    socket.leave(roomName);
+    if (room.players.length === 0) {
+      cleanRoom(roomName);
+    }
+    console.log(`🚪 ${socket.id} left room "${roomName}"`);
+  });
+
   // ─── Submit Answer (1v1 rooms) ───────────────────────────────────────────
   socket.on("submitAnswer", ({ roomId, answer }) => {
     const room = rooms[roomId];
@@ -790,7 +803,7 @@ io.on("connection", (socket) => {
         winnerId: wUid, winnerSocketId: socket.id, winnerUsername: wName,
         message: `🏆 ${wName} answered first and wins!`, coins: 50,
       });
-      setTimeout(() => cleanRoom(roomId), 15000);
+      setTimeout(() => cleanRoom(roomId), 3000);
     } else {
       socket.emit("wrongAnswer", { message: "❌ Wrong answer! Try again." });
     }
